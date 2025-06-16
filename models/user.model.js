@@ -4,36 +4,38 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
     firstName: {
         type: String,
-        required: true,
+        required: [true, 'First name is required'],
         trim: true,
-        minlength: 2,
+        minlength: [2, 'First name must be at least 2 characters'],
     },
     lastName: {
         type: String,
-        required: true,
+        required: [true, 'Last name is required'],
         trim: true,
-        minlength: 2,
+        minlength: [2, 'Last name must be at least 2 characters'],
     },
     email: {
         type: String,
-        required: true,
+        required: [true, 'Email is required'],
         unique: true,
         trim: true,
         lowercase: true,
+        match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please enter a valid email'],
     },
     password: {
         type: String,
-        required: true,
-        minlength: 8,
+        required: [true, 'Password is required'],
+        minlength: [8, 'Password must be at least 8 characters'],
     },
     company: {
         type: String,
-        required: true,
+        required: [true, 'Company name is required'],
         trim: true,
     },
     phone: {
         type: String,
         trim: true,
+        match: [/^\+?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/, 'Invalid phone number'],
     },
     position: {
         type: String,
@@ -85,8 +87,9 @@ userSchema.pre('save', async function (next) {
     next();
 });
 
+// Compare password
 userSchema.methods.comparePassword = async function (candidatePassword) {
-    return await bcrypt.compare(candidatePassword, this.password);
+    return bcrypt.compare(candidatePassword, this.password);
 };
 
 module.exports = mongoose.model('User', userSchema);

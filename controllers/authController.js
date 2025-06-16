@@ -2,15 +2,7 @@ const User = require('../models/user.model');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 
-const generateToken = (user) => {
-    return jwt.sign(
-        { id: user._id, email: user.email, role: user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: '1d' }
-    );
-};
-
-exports.signup = async (req, res) => {
+exports.signup = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
@@ -24,15 +16,26 @@ exports.signup = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        user = new User({ firstName, lastName, email, company, password, role });
+        user = new User({
+            firstName,
+            lastName,
+            email,
+            company,
+            password,
+            role: role === 'admin' ? 'admin' : 'driver', // Ensure only admin role for signup
+        });
+
         await user.save();
 
-        const token = generateToken(user);
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+            expiresIn: '1d',
+        });
+
         res.status(201).json({
-            message: 'User created successfully',
+            message: 'User registered successfully',
             token,
             user: {
-                id: user._id,
+                _id: user._id,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
@@ -41,11 +44,11 @@ exports.signup = async (req, res) => {
             },
         });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        next(error);
     }
 };
 
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
@@ -64,12 +67,19 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
-        const token = generateToken(user);
+        if (user.role !== 'admin') {
+            return res.status(403).json({ message: 'Only admins can log in' });
+        }
+
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+            expiresIn: '1d',
+        });
+
         res.status(200).json({
             message: 'Login successful',
             token,
             user: {
-                id: user._id,
+                _id: user._id,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
@@ -78,6 +88,6 @@ exports.login = async (req, res) => {
             },
         });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        next(error);
     }
 };
