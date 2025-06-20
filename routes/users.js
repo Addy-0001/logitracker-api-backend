@@ -4,6 +4,8 @@ const { verifyToken, requireAdmin } = require('../middleware/auth');
 const userController = require('../controllers/userController');
 const { check } = require('express-validator');
 
+
+router.get('/drivers', verifyToken, requireAdmin, userController.getDrivers);
 router.get('/me', verifyToken, requireAdmin, userController.getProfile);
 
 router.patch(

@@ -11,7 +11,7 @@ router.post(
         check('email').isEmail().withMessage('Please enter a valid email'),
         check('company').notEmpty().withMessage('Company name is required'),
         check('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
-        check('role').isIn(['admin']).withMessage('Invalid role'), // Restrict to admin
+        check('role').isIn(['admin', 'driver']).withMessage('Invalid role'), // Restrict to admin
     ],
     authController.signup,
 );

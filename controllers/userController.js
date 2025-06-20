@@ -127,3 +127,13 @@ exports.changePassword = async (req, res, next) => {
         next(error);
     }
 };
+
+// Get users with role driver
+exports.getDrivers = async (req, res, next) => {
+    try {
+        const drivers = await User.find({ role: 'driver' }).select('firstName lastName phone role');
+        res.status(200).json(drivers);
+    } catch (error) {
+        next(error);
+    }
+};
