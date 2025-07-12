@@ -2,28 +2,43 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const jwt = require('jsonwebtoken');
 
 dotenv.config();
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// CORS config
+const corsOptions = {
+    origin: ['http://localhost:5173'], // Restrict to your frontend's origin
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true, // Allow cookies or auth headers
+};
+app.use(cors(corsOptions));
+
 app.use(express.json());
 
-// Clear Mongoose model cache
-mongoose.models = {};
-mongoose.modelSchemas = {};
+// JWT Authentication Middleware
+const authMiddleware = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Expect "Bearer <token>"
 
-// Clear Node.js require cache for job.model.js
-delete require.cache[require.resolve('./models/job.model')];
+    if (!token) {
+        return res.status(401).json({ message: 'Access token required' });
+    }
 
-// Log resolved Job model path
-console.log('Resolving Job model from:', require.resolve('./models/job.model'));
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded; // Attach user info to request
+        next();
+    } catch (err) {
+        return res.status(403).json({ message: 'Invalid or expired token' });
+    }
+};
 
 // Connect to MongoDB
 mongoose
-    .connect(process.env.MONGO_URI)
+    .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('MongoDB connected'))
     .catch(err => console.error('MongoDB connection error:', err));
 
@@ -32,13 +47,9 @@ const jobRoutes = require('./routes/jobs');
 const userRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
 
-app.use('/api/v1/jobs', jobRoutes);
-app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/jobs', authMiddleware, jobRoutes); // Protect job routes
+app.use('/api/v1/users', authMiddleware, userRoutes);
 app.use('/api/v1/auth', authRoutes);
-
-// Debug Job schema after routes
-const Job = require('./models/job.model');
-console.log('Job schema in server.js:', Job.schema.paths.jobDetails.instance);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -49,4 +60,4 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));

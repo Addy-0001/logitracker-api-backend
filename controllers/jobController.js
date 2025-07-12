@@ -1,9 +1,9 @@
 const Job = require('../models/job.model');
 const User = require('../models/user.model');
 
-// Log resolved path and schema
+// Log resolved path and model availability
 console.log('Job model resolved from:', require.resolve('../models/job.model'));
-console.log('Job model jobDetails type in controller:', Job.schema.paths.jobDetails.instance);
+console.log('Job model loaded in controller:', Job ? 'Success' : 'Failure');
 
 exports.getJobs = async (req, res) => {
     try {
@@ -13,28 +13,31 @@ exports.getJobs = async (req, res) => {
         const { status, priority, search } = req.query;
         const query = {};
 
-        // Removed assignedTo filter to fetch all jobs
-        console.log('Fetching all jobs, ignoring assignedTo');
-
+        // Filter by status
         if (status) {
             query.status = status;
             console.log('Filtering by status:', status);
         }
 
-        // Adjust priority filter for jobDetails as string
+        // Filter by priority (inside jobDetails)
         if (priority) {
-            query.jobDetails = { $regex: `"priority":"${priority}"`, $options: 'i' };
+            query['jobDetails.priority'] = priority;
             console.log('Filtering by priority:', priority);
         }
 
+        // Search across customer and location fields
         if (search) {
             const regex = new RegExp(search, 'i');
             query.$or = [
+                { 'customerInfo.name': regex },
+                { pickupLocation: regex },
+                { deliveryLocation: regex },
+                { currentLocation: regex },
                 { 'customer.name': regex },
                 { 'pickup.city': regex },
                 { 'pickup.state': regex },
                 { 'delivery.city': regex },
-                { 'delivery.state': regex }
+                { 'delivery.state': regex },
             ];
             console.log('Filtering by search:', search);
         }
@@ -62,8 +65,30 @@ exports.createJob = async (req, res) => {
             return res.status(400).json({ message: 'Invalid or non-driver user assigned' });
         }
 
-        console.log('Request body jobDetails:', req.body.jobDetails);
-        console.log('jobDetails type:', typeof req.body.jobDetails);
+        // Ensure id is provided and unique
+        const { id } = req.body;
+        if (!id) {
+            return res.status(400).json({ message: 'Job ID is required' });
+        }
+        const existingJob = await Job.findOne({ id });
+        if (existingJob) {
+            return res.status(400).json({ message: `Job ID ${id} already exists` });
+        }
+
+        // Validate coordinates
+        const { pickupCoords, deliveryCoords, currentCoords } = req.body;
+        const validateCoords = (coords, name) => {
+            if (!coords || !Array.isArray(coords) || coords.length !== 2) {
+                throw new Error(`${name} must be an array of [lat, lng]`);
+            }
+            const [lat, lng] = coords;
+            if (lat < 26 || lat > 30 || lng < 80 || lng > 88) {
+                throw new Error(`${name} must be within Nepal (lat: 26-30, lng: 80-88)`);
+            }
+        };
+        validateCoords(pickupCoords, 'pickupCoords');
+        validateCoords(deliveryCoords, 'deliveryCoords');
+        validateCoords(currentCoords, 'currentCoords');
 
         const jobData = { ...req.body, assignedTo };
         console.log('Creating job with data:', jobData);
@@ -72,8 +97,6 @@ exports.createJob = async (req, res) => {
         console.log('Created job:', job);
 
         const jobResponse = job.toJSON ? job.toJSON() : job;
-        console.log('Sending response:', jobResponse);
-
         res.status(201).json(jobResponse);
     } catch (err) {
         console.error('Error creating job:', err.message, err.stack);
@@ -88,10 +111,11 @@ exports.getSummary = async (req, res) => {
         const [inTransit, pending, urgent, deliveredToday] = await Promise.all([
             Job.countDocuments({ status: 'in-transit' }),
             Job.countDocuments({ status: 'pending' }),
-            Job.countDocuments({ jobDetails: { $regex: '"priority":"high"', $options: 'i' } }),
+            Job.countDocuments({ 'jobDetails.priority': 'high' }),
             Job.countDocuments({
-                createdAt: { $gte: new Date().setHours(0, 0, 0, 0) }
-            })
+                status: 'delivered',
+                createdAt: { $gte: new Date().setHours(0, 0, 0, 0) },
+            }),
         ]);
 
         console.log('Summary stats:', { inTransit, pending, urgent, deliveredToday });
@@ -99,7 +123,7 @@ exports.getSummary = async (req, res) => {
             inTransit,
             pending,
             urgent,
-            deliveredToday
+            deliveredToday,
         });
     } catch (err) {
         console.error('Error fetching summary:', err.message, err.stack);
@@ -110,7 +134,7 @@ exports.getSummary = async (req, res) => {
 exports.getJobById = async (req, res) => {
     try {
         console.log('getJobById called with id:', req.params.id);
-        const job = await Job.findOne({ _id: req.params.id }).lean();
+        const job = await Job.findOne({ id: req.params.id }).lean();
         if (!job) {
             console.log('Job not found');
             return res.status(404).json({ message: 'Job not found' });

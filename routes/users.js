@@ -4,14 +4,13 @@ const { verifyToken, requireAdmin } = require('../middleware/auth');
 const userController = require('../controllers/userController');
 const { check } = require('express-validator');
 
+router.get('/me', verifyToken, userController.getProfile);
 
-router.get('/drivers', verifyToken, requireAdmin, userController.getDrivers);
-router.get('/me', verifyToken, requireAdmin, userController.getProfile);
+router.get('/users', verifyToken, requireAdmin, userController.getUsers);
 
 router.patch(
     '/update',
     verifyToken,
-    requireAdmin,
     [
         check('firstName')
             .optional()
@@ -49,12 +48,11 @@ router.patch(
     userController.updateProfile,
 );
 
-router.post('/avatar', verifyToken, requireAdmin, userController.uploadAvatar);
+router.post('/avatar', verifyToken, userController.uploadAvatar);
 
 router.patch(
     '/auth/change-password',
     verifyToken,
-    requireAdmin,
     [
         check('currentPassword')
             .notEmpty()
@@ -65,5 +63,19 @@ router.patch(
     ],
     userController.changePassword,
 );
+
+router.delete(
+    '/bulk-delete',
+    verifyToken,
+    requireAdmin,
+    [
+        check('userIds')
+            .isArray({ min: 1 })
+            .withMessage('User IDs must be a non-empty array'),
+    ],
+    userController.bulkDeleteUsers,
+);
+
+router.get('/export', verifyToken, requireAdmin, userController.exportUsers);
 
 module.exports = router;

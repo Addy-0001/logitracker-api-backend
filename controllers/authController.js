@@ -22,7 +22,7 @@ exports.signup = async (req, res, next) => {
             email,
             company,
             password,
-            role: role === 'admin' ? 'admin' : 'driver', // Ensure only admin role for signup
+            role: role === 'admin' ? 'admin' : 'driver',
         });
 
         await user.save();
@@ -65,10 +65,6 @@ exports.login = async (req, res, next) => {
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid credentials' });
-        }
-
-        if (user.role !== 'admin') {
-            return res.status(403).json({ message: 'Only admins can log in' });
         }
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
