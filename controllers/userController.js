@@ -45,6 +45,7 @@ exports.getProfile = async (req, res, next) => {
 };
 
 // Update user profile
+// Updates the current user profile
 exports.updateProfile = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -78,6 +79,7 @@ exports.updateProfile = async (req, res, next) => {
 };
 
 // Upload avatar
+// working
 exports.uploadAvatar = [
     upload.single('avatar'),
     async (req, res, next) => {
@@ -102,6 +104,7 @@ exports.uploadAvatar = [
 ];
 
 // Change password
+// working
 exports.changePassword = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -131,6 +134,7 @@ exports.changePassword = async (req, res, next) => {
 };
 
 // Get all users with filters
+// Working
 exports.getUsers = async (req, res, next) => {
     try {
         const { role, search } = req.query;
@@ -161,6 +165,7 @@ exports.getUsers = async (req, res, next) => {
 };
 
 // Bulk delete users
+// Working, almost deleted the whole database testing it. 
 exports.bulkDeleteUsers = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -178,6 +183,7 @@ exports.bulkDeleteUsers = async (req, res, next) => {
 };
 
 // Export users as CSV
+// Working
 exports.exportUsers = async (req, res, next) => {
     try {
         const users = await User.find().select('-password');

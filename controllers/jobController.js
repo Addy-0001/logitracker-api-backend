@@ -131,16 +131,28 @@ exports.getSummary = async (req, res) => {
     }
 };
 
+const mongoose = require('mongoose');
+
 exports.getJobById = async (req, res) => {
     try {
         console.log('getJobById called with id:', req.params.id);
-        const job = await Job.findOne({ id: req.params.id }).lean();
+
+        // Validate if req.params.id is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            console.log('Invalid job id format');
+            return res.status(400).json({ message: 'Invalid job id format' });
+        }
+
+        // Use _id field to find the job
+        const job = await Job.findById(req.params.id).lean();
+
         if (!job) {
             console.log('Job not found');
             return res.status(404).json({ message: 'Job not found' });
         }
+
         console.log('Fetched job:', job);
-        res.json(job);
+        res.status(200).json(job);
     } catch (err) {
         console.error('Error fetching job:', err.message, err.stack);
         res.status(500).json({ message: 'Error fetching job', error: err.message });
