@@ -84,6 +84,31 @@ router.patch('/:jobId/status', adminMiddleware, jobController.updateStatus);
  * @param {Function} jobController.generateJobPDF - Controller function to generate PDF
  * @returns {Object} JSON response with PDF file path or error message
  */
-router.get('/generate-pdf/:id', jobController.generateJobPDF);
+router.get('/generate-pdf/:id',adminMiddleware ,jobController.generateJobPDF);
+
+/**
+ * Generate PDF reports for all jobs
+ * 
+ * @name GET /getAllJobsPdf
+ * @function
+ * @memberof module:routes/jobRoutes
+ * @param {Function} adminMiddleware - Authentication middleware for admin users
+ * @param {Function} jobController.getAllJobPdfs - Controller function to generate PDFs for all jobs
+ * @returns {Object} JSON response with list of generated PDF paths or error message
+ */
+router.get('/getAllJobsPdf', adminMiddleware, jobController.getAllJobPdfs);
+
+/**
+ * Download PDF report for a specific job
+ * 
+ * @name GET /downloadJobPdf/:jobId
+ * @function
+ * @memberof module:routes/jobRoutes
+ * @param {string} :jobId - ID of the job to download PDF for
+ * @param {Function} adminMiddleware - Authentication middleware for admin users
+ * @param {Function} jobController.downloadJobPdf - Controller function to download job PDF
+ * @returns {File} PDF file download or JSON error message
+ */
+router.get('/downloadJobPdf/:jobId', adminMiddleware, jobController.downloadJobPdf);
 
 module.exports = router;

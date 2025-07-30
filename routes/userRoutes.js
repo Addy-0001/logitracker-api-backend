@@ -3,7 +3,7 @@ const { updateProfileValidation, changePasswordValidation } = require("../middle
 const router = express.Router();
 const userController = require("../controllers/userController");
 const upload = require('../middleware/multer');
-const driverMiddleware = require('../middleware/driverMiddleware');
+const commonMiddleware = require('../middleware/commonMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
 
 /**
@@ -19,12 +19,12 @@ const adminMiddleware = require('../middleware/adminMiddleware');
  * @function
  * @memberof module:routes/userRoutes
  * @param {string} :userId - ID of the user to retrieve profile for
- * @param {Function} driverMiddleware - Authentication middleware for drivers
+ * @param {Function} commonMiddleware - Authentication middleware for drivers
  * @param {Function} updateProfileValidation - Input validation middleware
  * @param {Function} userController.getProfile - Controller function to retrieve user profile
  * @returns {Object} JSON response with user profile data or error message
  */
-router.get('/getProfile/:userId', driverMiddleware, updateProfileValidation, userController.getProfile);
+router.get('/getProfile/:userId', commonMiddleware, updateProfileValidation, userController.getProfile);
 
 /**
  * Upload user avatar/profile image
@@ -32,12 +32,12 @@ router.get('/getProfile/:userId', driverMiddleware, updateProfileValidation, use
  * @name PATCH /uploadAvatar
  * @function
  * @memberof module:routes/userRoutes
- * @param {Function} driverMiddleware - Authentication middleware for drivers
+ * @param {Function} commonMiddleware - Authentication middleware for drivers
  * @param {Function} upload.single - Multer middleware for handling file upload
  * @param {Function} userController.uploadAvatar - Controller function to process avatar upload
  * @returns {Object} JSON response with profile image path or error message
  */
-router.patch('/uploadAvatar', driverMiddleware, upload.single('avatar'), userController.uploadAvatar);
+router.patch('/uploadAvatar', commonMiddleware, upload.single('avatar'), userController.uploadAvatar);
 
 /**
  * Change user password
@@ -45,12 +45,12 @@ router.patch('/uploadAvatar', driverMiddleware, upload.single('avatar'), userCon
  * @name PATCH /changePassword
  * @function
  * @memberof module:routes/userRoutes
- * @param {Function} driverMiddleware - Authentication middleware for drivers
+ * @param {Function} commonMiddleware - Authentication middleware for drivers
  * @param {Function} changePasswordValidation - Input validation middleware
  * @param {Function} userController.changePassword - Controller function to handle password change
  * @returns {Object} JSON response with success status or error message
  */
-router.patch('/changePassword', driverMiddleware, changePasswordValidation, userController.changePassword);
+router.patch('/changePassword',commonMiddleware , changePasswordValidation, userController.changePassword);
 
 /**
  * Update the authenticated user's own profile
@@ -58,11 +58,11 @@ router.patch('/changePassword', driverMiddleware, changePasswordValidation, user
  * @name PATCH /updateProfile
  * @function
  * @memberof module:routes/userRoutes
- * @param {Function} driverMiddleware - Authentication middleware for drivers
+ * @param {Function} commonMiddleware - Authentication middleware for drivers
  * @param {Function} userController.updateProfile - Controller function to update user's own profile
  * @returns {Object} JSON response with updated user data or error message
  */
-router.patch('/updateProfile', driverMiddleware, userController.updateProfile);
+router.patch('/updateProfile', commonMiddleware, userController.updateProfile);
 
 /**
  * Update a user's profile (admin only)

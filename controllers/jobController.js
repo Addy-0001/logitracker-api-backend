@@ -355,6 +355,83 @@ exports.generateJobPDF = async (req, res) => {
   }
 };
 
+/**
+ * Retrieves a list of all job PDF reports
+ * 
+ * @async
+ * @function getAllJobPdfs
+ * @param {Object} req - Express request object
+ * @param {Object} req.protocol - Request protocol (http/https)
+ * @param {Function} req.get - Function to get request headers
+ * @param {Object} res - Express response object
+ * @returns {Object} JSON response with list of PDF files and URLs or error message
+ * @throws {Error} If server error occurs during retrieval
+ */
+exports.getAllJobPdfs = async (req, res) => {
+    try {
+        const pdfDir = path.join(__dirname, '../pdfs');
+
+        if (!fs.existsSync(pdfDir)) {
+            return res.status(404).json({ message: 'PDF directory not found' });
+        }
+
+        const files = fs.readdirSync(pdfDir);
+
+        const jobPdfs = files.filter(file => file.startsWith('job-') && file.endsWith('.pdf'));
+
+        const baseUrl = `${req.protocol}://${req.get('host')}/pdfs`;
+
+        const fileLinks = jobPdfs.map(file => {
+            const id = file.replace('job-', '').replace('.pdf', '');
+            return {
+                id,
+                name: file,
+                url: `${baseUrl}/${file}`
+            };
+        });
+
+        return res.status(200).json({
+            message: 'Job PDFs fetched successfully',
+            count: jobPdfs.length,
+            files: fileLinks
+        });
+
+    } catch (error) {
+        console.error('Error fetching PDFs:', error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
+
+/**
+ * Downloads a PDF report for a specific job
+ * 
+ * @async
+ * @function downloadJobPdf
+ * @param {Object} req - Express request object
+ * @param {Object} req.params - Request parameters
+ * @param {string} req.params.jobId - ID of the job PDF to download
+ * @param {Object} res - Express response object
+ * @returns {File} PDF file download or error message
+ * @throws {Error} If server error occurs during download or file is not found
+ */
+exports.downloadJobPdf = async (req, res) => {
+    const fileId = req.params.jobId;
+    const fileName = `job-${fileId}.pdf`;
+    const filePath = path.join(__dirname, '../pdfs', fileName);
+    console.log(fileId);
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: 'File not found' });
+    }
+    res.download(filePath, fileName, (err) => {
+        if (err) {
+            console.error('Download error:', err);
+            return res.status(500).json({ message: 'Error downloading file' });
+        }
+    });
+};
+
+
+
 
 
 
