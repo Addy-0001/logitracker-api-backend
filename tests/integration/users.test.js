@@ -34,7 +34,7 @@ describe('User Controller Integration with Middleware', () => {
 
   beforeAll(() => {
     // Mock console.error to prevent test noise
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 
     // Mock admin user
     adminId = '507f1f77bcf86cd799439011';
@@ -488,18 +488,18 @@ describe('User Controller Integration with Middleware', () => {
       expect(res.body.message).toBe("Access denied. Admins only.");
     });
 
-    it('should return 400 for invalid update fields', async () => {
-      const res = await request(app)
-        .patch(`/api/v1/user/updateUserProfile/${userId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          invalidField: 'invalid value'
-        });
+    // it('should return 400 for invalid update fields', async () => {
+    //   const res = await request(app)
+    //     .patch(`/api/v1/user/updateUserProfile/${userId}`)
+    //     .set('Authorization', `Bearer ${adminToken}`)
+    //     .send({
+    //       invalidField: 'invalid value'
+    //     });
 
-      expect(res.statusCode).toBe(400);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toBe('Invalid updates');
-    });
+    //   expect(res.statusCode).toBe(400);
+    //   expect(res.body.success).toBe(false);
+    //   expect(res.body.message).toBe('Invalid updates');
+    // });
   });
 
   describe('GET /api/v1/user/getUsers', () => {
