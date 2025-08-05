@@ -106,18 +106,16 @@ exports.updateUserProfile = async (req, res) => {
     const userId = req.params.id;
     try {
         const updates = req.body;
-        // const allowedUpdates = [
-        //     'firstName', 'lastName', 'phone', 'role', '_id', 'createdAt', 'updatedAt', 'profileImage', 'profileImageId'
-        // ];
-        // // const isValidUpdate = Object.keys(updates).every((key) => allowedUpdates.includes(key));
-        // // console.log(isValidUpdate);
-        // console.log(updates)
-        // // if (!isValidUpdate) {
-        // //     return res.status(400).json({
-        // //         success: false,
-        // //         message: 'Invalid updates'
-        // //     });
-        // // }
+        const allowedUpdates = [
+            'firstName', 'lastName', 'phone', 'role'
+        ];
+        // const isValidUpdate = Object.keys(updates).every((key) => allowedUpdates.includes(key));
+        // if (!isValidUpdate) {
+        //     return res.status(400).json({
+        //         success: false,
+        //         message: 'Invalid updates'
+        //     });
+        // }
 
         const user = await User.findByIdAndUpdate(
             userId,
